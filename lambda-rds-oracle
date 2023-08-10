@@ -1,0 +1,47 @@
+import json
+import boto3
+
+def execute_sql_on_rds(sql_script, db_instance_arn):
+    try:
+        # Connect to RDS and execute the SQL script
+        rds_client = boto3.client('rds-data')
+
+        response = rds_client.execute_statement(
+            resourceArn=db_instance_arn,
+            secretArn='arn:aws:secretsmanager:us-east-1:123456789012:secret:MyRdsSecret',
+            database='mydatabase',
+            sql=sql_script
+        )
+
+        if response['numberOfRecordsUpdated'] > 0:
+            return {
+                'statusCode': 200,
+                'body': json.dumps(f'Success: {response["numberOfRecordsUpdated"]} records updated.')
+            }
+        else:
+            return {
+                'statusCode': 200,
+                'body': json.dumps('No records updated.')
+            }
+    except Exception as e:
+        return {
+            'statusCode': 500,
+            'body': json.dumps(str(e))
+        }
+
+def lambda_handler(event, context):
+    # Parse input from the API Gateway event
+    try:
+        request_body = json.loads(event['body'])
+        sql_script = request_body['sql_script']
+    except KeyError:
+        return {
+            'statusCode': 400,
+            'body': json.dumps('Invalid input')
+        }
+
+    # Replace with the actual ARN of your RDS instance
+    db_instance_arn = 'arn:aws:rds:us-east-1:123456789012:cluster:mydatabase'
+
+    # Execute the SQL script on RDS
+    return execute_sql_on_rds(sql_script, db_instance_arn)
