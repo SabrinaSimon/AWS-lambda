@@ -1,0 +1,17 @@
+import json
+
+def lambda_handler(event, context):
+    """
+    AWS Lambda Function to return a simple JSON response.
+    """
+    response = {
+        "statusCode": 200,
+        "headers": {
+            "Content-Type": "application/json"
+        },
+        "body": json.dumps({
+            "message": "Hello, World!",
+            "input": event
+        })
+    }
+    return response
