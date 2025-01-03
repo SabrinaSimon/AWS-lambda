@@ -1,0 +1,33 @@
+provider "google" {
+  project = "your-gcp-project-id"
+  region  = "us-central1"
+}
+
+resource "google_storage_bucket" "code_bucket" {
+  name          = "lambda-to-gcp-function-code"
+  location      = "US"
+  force_destroy = true
+}
+
+resource "google_storage_bucket_object" "function_code" {
+  name   = "lambda_function.zip"
+  bucket = google_storage_bucket.code_bucket.name
+  source = "lambda_function.zip"
+}
+
+resource "google_cloudfunctions_function" "hello_world_function" {
+  name        = "helloWorldFunction"
+  description = "Hello World function in GCP"
+  runtime     = "python39"
+
+  entry_point = "lambda_handler"
+  source_archive_bucket = google_storage_bucket.code_bucket.name
+  source_archive_object = google_storage_bucket_object.function_code.name
+  trigger_http          = true
+
+  available_memory_mb = 128
+}
+
+output "gcp_function_url" {
+  value = google_cloudfunctions_function.hello_world_function.https_trigger_url
+}
